@@ -10,11 +10,11 @@ import (
 	"github.com/aws/aws-sdk-go/service/ses"
 	"github.com/aws/aws-sdk-go/service/ses/sesiface"
 	"github.com/fleetdm/fleet/v4/server/fleet"
-	"net/url"
 )
 
 type sesSender struct {
-	client sesiface.SESAPI
+	client    sesiface.SESAPI
+	sourceArn string
 }
 
 func (s *sesSender) SendEmail(e fleet.Email) error {
@@ -31,7 +31,7 @@ func (s *sesSender) SendEmail(e fleet.Email) error {
 	return s.sendMail(e, msg)
 }
 
-func NewSESSender(region, endpointURL, id, secret, stsAssumeRoleArn string) (*sesSender, error) {
+func NewSESSender(region, endpointURL, id, secret, stsAssumeRoleArn, sourceArn string) (*sesSender, error) {
 	conf := &aws.Config{
 		Region:   &region,
 		Endpoint: &endpointURL, // empty string or nil will use default values
@@ -58,7 +58,7 @@ func NewSESSender(region, endpointURL, id, secret, stsAssumeRoleArn string) (*se
 			return nil, fmt.Errorf("create SES client: %w", err)
 		}
 	}
-	return &sesSender{client: ses.New(sess)}, nil
+	return &sesSender{client: ses.New(sess), sourceArn: sourceArn}, nil
 }
 
 func (s *sesSender) sendMail(e fleet.Email, msg []byte) error {
@@ -67,31 +67,14 @@ func (s *sesSender) sendMail(e fleet.Email, msg []byte) error {
 		t := e.To[i]
 		toAddresses[i] = &t
 	}
-	replyToAddresses := make([]*string, 1)
-	if len(e.Config.SMTPSettings.SMTPSenderAddress) == 0 {
-		serverURL, err := url.Parse(e.Config.ServerSettings.ServerURL)
-		if err != nil {
-			return err
-		}
-		reply := fmt.Sprintf("do-not-reply@%s", serverURL.Host)
-		replyToAddresses[0] = &reply
-	} else {
-		replyToAddresses[0] = &e.Config.SMTPSettings.SMTPSenderAddress
-	}
-	subj := e.Subject
-	body := string(msg)
-	message := &ses.Message{
-		Subject: &ses.Content{Data: &subj},
-		Body: &ses.Body{
-			Text: &ses.Content{Data: &body},
-		},
-	}
-	destination := &ses.Destination{ToAddresses: toAddresses}
-	_, err := s.client.SendEmail(&ses.SendEmailInput{
-		Message:          message,
-		Destination:      destination,
-		ReplyToAddresses: replyToAddresses,
+
+	_, err := s.client.SendRawEmail(&ses.SendRawEmailInput{
+		Destinations: toAddresses,
+		FromArn:      &s.sourceArn,
+		RawMessage:   &ses.RawMessage{Data: msg},
+		SourceArn:    &s.sourceArn,
 	})
+
 	if err != nil {
 		return err
 	}

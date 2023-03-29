@@ -266,6 +266,7 @@ type SESConfig struct {
 	AccessKeyID      string `yaml:"access_key_id"`
 	SecretAccessKey  string `yaml:"secret_access_key"`
 	StsAssumeRoleArn string `yaml:"sts_assume_role_arn"`
+	SourceArn        string `yaml:"source_arn"`
 }
 
 type EmailConfig struct {
@@ -885,6 +886,7 @@ func (man Manager) addConfigs() {
 	man.addConfigString("ses.access_key_id", "", "Access Key ID for AWS authentication")
 	man.addConfigString("ses.secret_access_key", "", "Secret Access Key for AWS authentication")
 	man.addConfigString("ses.sts_assume_role_arn", "", "ARN of role to assume for AWS")
+	man.addConfigString("ses.source_arn", "", "ARN of the identity that is associated with the sending authorization policy that permits you to send for the email address specified in the Source parameter")
 
 	// Firehose
 	man.addConfigString("firehose.region", "", "AWS Region to use")
@@ -1218,6 +1220,7 @@ func (man Manager) LoadConfig() FleetConfig {
 			AccessKeyID:      man.getConfigString("ses.access_key_id"),
 			SecretAccessKey:  man.getConfigString("ses.secret_access_key"),
 			StsAssumeRoleArn: man.getConfigString("ses.sts_assume_role_arn"),
+			SourceArn:        man.getConfigString("ses.source_arn"),
 		},
 		PubSub: PubSubConfig{
 			Project:       man.getConfigString("pubsub.project"),

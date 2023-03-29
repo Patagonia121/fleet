@@ -10,6 +10,7 @@ import (
 	"html/template"
 	"net"
 	"net/smtp"
+	"net/url"
 	"strings"
 	"time"
 
@@ -20,7 +21,7 @@ import (
 func NewService(config config.FleetConfig) (fleet.MailService, error) {
 	switch strings.ToLower(config.Email.EmailBackend) {
 	case "ses":
-		return NewSESSender(config.SES.Region, config.SES.EndpointURL, config.SES.AccessKeyID, config.SES.SecretAccessKey, config.SES.StsAssumeRoleArn)
+		return NewSESSender(config.SES.Region, config.SES.EndpointURL, config.SES.AccessKeyID, config.SES.SecretAccessKey, config.SES.StsAssumeRoleArn, config.SES.SourceArn)
 	default:
 		return &mailService{}, nil
 	}
@@ -64,9 +65,25 @@ func getMessageBody(e fleet.Email) ([]byte, error) {
 	mime := `MIME-version: 1.0;` + "\r\n"
 	content := `Content-Type: text/html; charset="UTF-8";` + "\r\n"
 	subject := "Subject: " + e.Subject + "\r\n"
-	from := "From: " + e.Config.SMTPSettings.SMTPSenderAddress + "\r\n"
+	from, err := getFrom(e)
+	if err != nil {
+		return nil, fmt.Errorf("get mailer message from: %w", err)
+	}
+
 	msg := []byte(subject + from + mime + content + "\r\n" + string(body) + "\r\n")
 	return msg, nil
+}
+
+func getFrom(e fleet.Email) (string, error) {
+	from := e.Config.SMTPSettings.SMTPSenderAddress
+	if len(e.Config.SMTPSettings.SMTPSenderAddress) == 0 {
+		serverURL, err := url.Parse(e.Config.ServerSettings.ServerURL)
+		if err != nil {
+			return "", err
+		}
+		from = fmt.Sprintf("do-not-reply@%s", serverURL.Host)
+	}
+	return fmt.Sprintf("From: %s\r\n", from), nil
 }
 
 func (m mailService) SendEmail(e fleet.Email) error {
