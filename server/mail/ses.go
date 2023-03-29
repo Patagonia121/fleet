@@ -10,11 +10,20 @@ import (
 	"github.com/aws/aws-sdk-go/service/ses"
 	"github.com/aws/aws-sdk-go/service/ses/sesiface"
 	"github.com/fleetdm/fleet/v4/server/fleet"
+	"net/url"
 )
 
 type sesSender struct {
 	client    sesiface.SESAPI
 	sourceArn string
+}
+
+func getFromSES(e fleet.Email) string {
+	serverURL, err := url.Parse(e.Config.ServerSettings.ServerURL)
+	if err != nil {
+		return ""
+	}
+	return fmt.Sprintf("From: %s\r\n", fmt.Sprintf("do-not-reply@%s", serverURL.Host))
 }
 
 func (s *sesSender) SendEmail(e fleet.Email) error {
@@ -24,7 +33,7 @@ func (s *sesSender) SendEmail(e fleet.Email) error {
 	if !e.Config.SMTPSettings.SMTPConfigured {
 		return errors.New("email not configured")
 	}
-	msg, err := getMessageBody(e)
+	msg, err := getMessageBody(e, getFromSES)
 	if err != nil {
 		return err
 	}

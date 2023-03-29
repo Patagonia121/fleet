@@ -10,7 +10,6 @@ import (
 	"html/template"
 	"net"
 	"net/smtp"
-	"net/url"
 	"strings"
 	"time"
 
@@ -34,7 +33,7 @@ type sender interface {
 }
 
 func Test(mailer fleet.MailService, e fleet.Email) error {
-	mailBody, err := getMessageBody(e)
+	mailBody, err := getMessageBody(e, getFrom)
 	if err != nil {
 		return fmt.Errorf("failed to get message body: %w", err)
 	}
@@ -57,7 +56,9 @@ const (
 	PortTLS = 587
 )
 
-func getMessageBody(e fleet.Email) ([]byte, error) {
+type fromFunc func(e fleet.Email) string
+
+func getMessageBody(e fleet.Email, f fromFunc) ([]byte, error) {
 	body, err := e.Mailer.Message()
 	if err != nil {
 		return nil, fmt.Errorf("get mailer message: %w", err)
@@ -65,32 +66,20 @@ func getMessageBody(e fleet.Email) ([]byte, error) {
 	mime := `MIME-version: 1.0;` + "\r\n"
 	content := `Content-Type: text/html; charset="UTF-8";` + "\r\n"
 	subject := "Subject: " + e.Subject + "\r\n"
-	from, err := getFrom(e)
-	if err != nil {
-		return nil, fmt.Errorf("get mailer message from: %w", err)
-	}
-
+	from := f(e)
 	msg := []byte(subject + from + mime + content + "\r\n" + string(body) + "\r\n")
 	return msg, nil
 }
 
-func getFrom(e fleet.Email) (string, error) {
-	from := e.Config.SMTPSettings.SMTPSenderAddress
-	if len(e.Config.SMTPSettings.SMTPSenderAddress) == 0 {
-		serverURL, err := url.Parse(e.Config.ServerSettings.ServerURL)
-		if err != nil {
-			return "", err
-		}
-		from = fmt.Sprintf("do-not-reply@%s", serverURL.Host)
-	}
-	return fmt.Sprintf("From: %s\r\n", from), nil
+func getFrom(e fleet.Email) string {
+	return "From: " + e.Config.SMTPSettings.SMTPSenderAddress + "\r\n"
 }
 
 func (m mailService) SendEmail(e fleet.Email) error {
 	if !e.Config.SMTPSettings.SMTPConfigured {
 		return errors.New("email not configured")
 	}
-	msg, err := getMessageBody(e)
+	msg, err := getMessageBody(e, getFrom)
 	if err != nil {
 		return err
 	}
