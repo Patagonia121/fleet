@@ -8,18 +8,18 @@ resource "aws_ses_domain_identity" "default" {
 
 ###DNS VERIFICATION#######
 
-resource "aws_ses_domain_identity_verification" "default" {
-  domain     = aws_ses_domain_identity.default.id
-  depends_on = [aws_route53_record.ses_verification]
-}
-
-resource "aws_route53_record" "ses_verification" {
-  zone_id = data.aws_route53_zone.main.zone_id
-  name    = ""
-  type    = "TXT"
-  ttl     = "600"
-  records = [aws_ses_domain_identity.default.verification_token]
-}
+#resource "aws_ses_domain_identity_verification" "default" {
+#  domain     = aws_ses_domain_identity.default.id
+#  depends_on = [aws_route53_record.ses_verification]
+#}
+#
+#resource "aws_route53_record" "ses_verification" {
+#  zone_id = data.aws_route53_zone.main.zone_id
+#  name    = ""
+#  type    = "TXT"
+#  ttl     = "600"
+#  records = [aws_ses_domain_identity.default.verification_token]
+#}
 
 resource "aws_ses_domain_dkim" "default" {
   domain = aws_ses_domain_identity.default.domain
