@@ -1023,7 +1023,11 @@ func (svc *Service) RequestPasswordReset(ctx context.Context, email string) erro
 		},
 	}
 
-	return svc.mailService.SendEmail(resetEmail)
+	err = svc.mailService.SendEmail(resetEmail)
+	if err != nil {
+		svc.logger.Log("err", err, "msg", "failed to send password reset request email")
+	}
+	return err
 }
 
 func (svc *Service) ListAvailableTeamsForUser(ctx context.Context, user *fleet.User) ([]*fleet.TeamSummary, error) {

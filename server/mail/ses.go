@@ -31,9 +31,6 @@ func (s *sesSender) SendEmail(e fleet.Email) error {
 	if s.client == nil {
 		return errors.New("ses sender not configured")
 	}
-	if !e.Config.SMTPSettings.SMTPConfigured {
-		return errors.New("email not configured")
-	}
 	msg, err := getMessageBody(e, getFromSES)
 	if err != nil {
 		return err

@@ -1,10 +1,10 @@
 package mail
 
 import (
-	"github.com/fleetdm/fleet/v4/server/config"
 	"os"
 	"testing"
 
+	"github.com/fleetdm/fleet/v4/server/config"
 	"github.com/fleetdm/fleet/v4/server/fleet"
 	"github.com/fleetdm/fleet/v4/server/test"
 	"github.com/stretchr/testify/assert"
