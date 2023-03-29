@@ -28,7 +28,7 @@ resource "aws_ses_domain_dkim" "default" {
 ###DKIM VERIFICATION#######
 
 resource "aws_route53_record" "dkim" {
-  for_each = aws_ses_domain_dkim.default.dkim_tokens
+  for_each = toset(aws_ses_domain_dkim.default.dkim_tokens)
   zone_id  = data.aws_route53_zone.main.zone_id
   name     = format("%s._domainkey.%s", each.key, var.domain)
   type     = "CNAME"
