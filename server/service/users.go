@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"errors"
+	"github.com/go-kit/kit/log/level"
 	"html/template"
 	"net/http"
 	"time"
@@ -1025,7 +1026,7 @@ func (svc *Service) RequestPasswordReset(ctx context.Context, email string) erro
 
 	err = svc.mailService.SendEmail(resetEmail)
 	if err != nil {
-		svc.logger.Log("err", err, "msg", "failed to send password reset request email")
+		level.Error(svc.logger).Log("err", err, "msg", "failed to send password reset request email")
 	}
 	return err
 }
