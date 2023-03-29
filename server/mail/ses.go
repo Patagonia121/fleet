@@ -3,6 +3,8 @@ package mail
 import (
 	"errors"
 	"fmt"
+	"net/url"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
@@ -10,7 +12,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/ses"
 	"github.com/aws/aws-sdk-go/service/ses/sesiface"
 	"github.com/fleetdm/fleet/v4/server/fleet"
-	"net/url"
 )
 
 type sesSender struct {

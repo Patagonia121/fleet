@@ -6,7 +6,6 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"github.com/fleetdm/fleet/v4/server/config"
 	"html/template"
 	"net"
 	"net/smtp"
@@ -14,6 +13,7 @@ import (
 	"time"
 
 	"github.com/fleetdm/fleet/v4/server/bindata"
+	"github.com/fleetdm/fleet/v4/server/config"
 	"github.com/fleetdm/fleet/v4/server/fleet"
 )
 
