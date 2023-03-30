@@ -10,21 +10,27 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ses"
-	"github.com/aws/aws-sdk-go/service/ses/sesiface"
 	"github.com/fleetdm/fleet/v4/server/fleet"
 )
 
+type fleetSESSender interface {
+	SendRawEmail(input *ses.SendRawEmailInput) (*ses.SendRawEmailOutput, error)
+}
+
 type sesSender struct {
-	client    sesiface.SESAPI
+	client    fleetSESSender
 	sourceArn string
 }
 
-func getFromSES(e fleet.Email) string {
-	serverURL, err := url.Parse(e.Config.ServerSettings.ServerURL)
-	if err != nil {
-		return ""
+func getFromSES(e fleet.Email) (string, error) {
+	if e.Config == nil {
+		return "", errors.New("app config is nil")
 	}
-	return fmt.Sprintf("From: %s\r\n", fmt.Sprintf("do-not-reply@%s", serverURL.Host))
+	serverURL, err := url.Parse(e.Config.ServerSettings.ServerURL)
+	if err != nil || len(serverURL.Host) == 0 {
+		return "", fmt.Errorf("failed to parse server url %s err: %w", e.Config.ServerSettings.ServerURL, err)
+	}
+	return fmt.Sprintf("From: %s\r\n", fmt.Sprintf("do-not-reply@%s", serverURL.Host)), nil
 }
 
 func (s *sesSender) SendEmail(e fleet.Email) error {

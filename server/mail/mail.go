@@ -56,7 +56,7 @@ const (
 	PortTLS = 587
 )
 
-type fromFunc func(e fleet.Email) string
+type fromFunc func(e fleet.Email) (string, error)
 
 func getMessageBody(e fleet.Email, f fromFunc) ([]byte, error) {
 	body, err := e.Mailer.Message()
@@ -66,13 +66,16 @@ func getMessageBody(e fleet.Email, f fromFunc) ([]byte, error) {
 	mime := `MIME-version: 1.0;` + "\r\n"
 	content := `Content-Type: text/html; charset="UTF-8";` + "\r\n"
 	subject := "Subject: " + e.Subject + "\r\n"
-	from := f(e)
+	from, err := f(e)
+	if err != nil {
+		return nil, fmt.Errorf("failed to obtain from address: %w", err)
+	}
 	msg := []byte(subject + from + mime + content + "\r\n" + string(body) + "\r\n")
 	return msg, nil
 }
 
-func getFrom(e fleet.Email) string {
-	return "From: " + e.Config.SMTPSettings.SMTPSenderAddress + "\r\n"
+func getFrom(e fleet.Email) (string, error) {
+	return "From: " + e.Config.SMTPSettings.SMTPSenderAddress + "\r\n", nil
 }
 
 func (m mailService) SendEmail(e fleet.Email) error {
