@@ -1,11 +1,13 @@
 package mail
 
 import (
+	"errors"
 	"fmt"
+	"testing"
+
 	"github.com/aws/aws-sdk-go/service/ses"
 	"github.com/fleetdm/fleet/v4/server/fleet"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func Test_getFromSES(t *testing.T) {
@@ -48,7 +50,7 @@ type mockSESSender struct {
 
 func (m mockSESSender) SendRawEmail(input *ses.SendRawEmailInput) (*ses.SendRawEmailOutput, error) {
 	if m.shouldErr {
-		return nil, fmt.Errorf("some error")
+		return nil, errors.New("some error")
 	}
 	return nil, nil
 }
