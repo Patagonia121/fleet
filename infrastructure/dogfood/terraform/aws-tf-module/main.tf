@@ -291,6 +291,6 @@ module "notify_slack" {
 }
 
 module "ses" {
-  source = "github.com/fleetdm/fleet//terraform/addons/ses?ref=edwardsb-ses-mailer"
+  source = "github.com/fleetdm/fleet//terraform/addons/ses?ref=main"
   domain = "dogfood.fleetdm.com"
 }
